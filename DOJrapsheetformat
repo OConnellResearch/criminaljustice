@@ -1,0 +1,29 @@
+keep CII NAME BIRTHDATE
+*DOJ cant match on missing values for CII.
+drop if CII=="NULL"
+*dropping unique humans based on CII, Name, and DOB.  This is what DOJ uses to match on. The case id and person ID is how we can then merge criminal history back on.
+duplicates drop CII NAME BIRTHDATE, force
+*variables have to take up a certain amount of space(think of the DOJ data format as a typewriter.)  these commands transform the variables to be of a certain length and format.
+gen year=year(BIRTHDATE)
+gen month=month(BIRTHDATE)
+gen day=day(BIRTHDATE)
+gen str4 year1=string( year, "%04.0f")
+gen str4 month1 =string( month , "%02.0f")
+gen str4 day1=string(day, "%02.0f")
+drop BIRTHDATE
+gen BIRTH1= year1+ month1+ day1
+replace BIRTH1="" if BIRTH1=="..."
+destring BIRTH1, gen(BIRTHDATE)
+drop year month day year1 month1 day1 BIRTH1
+
+
+order CII NAME BIRTHDATE
+recast str30 NAME, force
+format %-30s NAME
+format %-9.0f BIRTHDATE
+format %010.0f CII
+compress
+sort NAME
+
+save "Unified dataset\20140130_offendermatch_DOJfile.dta",replace
+outfile using "Unified dataset\20140130offendermatch_DOJfile_FULL.txt", noquote replace
